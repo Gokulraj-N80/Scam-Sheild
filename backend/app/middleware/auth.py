@@ -32,18 +32,19 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     # ------------------------------------------------------------------
     # Mock token handling (dev / testing)
     # ------------------------------------------------------------------
-    if settings.USE_MOCK_DATABASE or token.startswith("mock_"):
-        if token.startswith("mock_"):
-            try:
-                parts = token.split("|")
-                uid   = parts[0].replace("mock_", "", 1)
-                email = parts[1] if len(parts) > 1 else "guest@scamshield.local"
-                name  = parts[2] if len(parts) > 2 else "Mock User"
-                return {"uid": uid, "email": email, "name": name}
-            except Exception:
-                return {"uid": "mock_default_user", "email": "mock.default@scamshield.local", "name": "Mock User"}
-        else:
+    if token.startswith("mock_"):
+        try:
+            parts = token.split("|")
+            uid   = parts[0].replace("mock_", "", 1)
+            email = parts[1] if len(parts) > 1 else "guest@scamshield.local"
+            name  = parts[2] if len(parts) > 2 else "Mock User"
+            return {"uid": uid, "email": email, "name": name}
+        except Exception:
             return {"uid": "mock_default_user", "email": "mock.default@scamshield.local", "name": "Mock User"}
+
+    if settings.USE_MOCK_DATABASE:
+        # Fallback only if no real Google token is passed
+        return {"uid": "mock_default_user", "email": "mock.default@scamshield.local", "name": "Mock User"}
 
     # ------------------------------------------------------------------
     # Real Google OAuth access token verification

@@ -36,11 +36,11 @@ function AuthProviderInner({ children }) {
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Restore session from localStorage on mount
+  // Restore session from sessionStorage on mount
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (useMockAuth) {
-      const cached = localStorage.getItem("scamshield_mock_user");
+      const cached = sessionStorage.getItem("scamshield_mock_user");
       if (cached) {
         const parsedUser = JSON.parse(cached);
         const mockToken = `mock_${parsedUser.uid}|${parsedUser.email}|${parsedUser.name}`;
@@ -50,8 +50,8 @@ function AuthProviderInner({ children }) {
       }
       setLoading(false);
     } else {
-      const cachedUser = localStorage.getItem("scamshield_user");
-      const cachedToken = localStorage.getItem("scamshield_token");
+      const cachedUser = sessionStorage.getItem("scamshield_user");
+      const cachedToken = sessionStorage.getItem("scamshield_token");
       if (cachedUser && cachedToken) {
         setUser(JSON.parse(cachedUser));
         setToken(cachedToken);
@@ -87,8 +87,8 @@ function AuthProviderInner({ children }) {
 
         setUser(userObj);
         setToken(accessToken);
-        localStorage.setItem("scamshield_user", JSON.stringify(userObj));
-        localStorage.setItem("scamshield_token", accessToken);
+        sessionStorage.setItem("scamshield_user", JSON.stringify(userObj));
+        sessionStorage.setItem("scamshield_token", accessToken);
 
         await syncUserWithBackend(userObj, accessToken);
         setLoading(false);
@@ -118,7 +118,7 @@ function AuthProviderInner({ children }) {
         photoURL: "https://api.dicebear.com/7.x/bottts/svg?seed=scamshield",
       };
       const mockToken = `mock_${mockUser.uid}|${mockUser.email}|${mockUser.name}`;
-      localStorage.setItem("scamshield_mock_user", JSON.stringify(mockUser));
+      sessionStorage.setItem("scamshield_mock_user", JSON.stringify(mockUser));
       setUser(mockUser);
       setToken(mockToken);
       await syncUserWithBackend(mockUser, mockToken);
@@ -137,10 +137,10 @@ function AuthProviderInner({ children }) {
     setUser(null);
     setToken(null);
     if (useMockAuth) {
-      localStorage.removeItem("scamshield_mock_user");
+      sessionStorage.removeItem("scamshield_mock_user");
     } else {
-      localStorage.removeItem("scamshield_user");
-      localStorage.removeItem("scamshield_token");
+      sessionStorage.removeItem("scamshield_user");
+      sessionStorage.removeItem("scamshield_token");
     }
   };
 

@@ -6,10 +6,7 @@ const SCAM_EXAMPLES = [
     label: "Phishing — Bank",
     text: "URGENT: Your bank account has been locked due to an unauthorized login. Click here immediately to verify your identity and unlock your account: http://mockbank-security.com/verify",
   },
-  {
-    label: "Fake Order — Amazon",
-    text: "Dear Customer, your Amazon order #8472910 has been cancelled. To receive your $249.99 refund, please verify your payment details at http://amaz0n-refund.xyz/claim",
-  },
+
   {
     label: "Fake Alert — Netflix",
     text: "Your Netflix payment failed. Update your card immediately to avoid account suspension. Click here: http://netflix-billing-verify.com/secure-update",
