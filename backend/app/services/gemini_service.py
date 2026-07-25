@@ -22,43 +22,92 @@ def analyze_message(original_text: str, nlp_data: dict) -> dict:
         return get_mock_analysis(original_text, nlp_data)
 
     try:
-        model = genai.GenerativeModel("gemini-2.0-flash")
-        
-        # System instructions/prompt instructing the model to output valid JSON
-        prompt = f"""
-        You are ScamShield, an advanced cybersecurity AI specialized in detecting scam messages, phishing attempts, spam, and financial fraud.
-        Analyze the following text message and its NLP metadata, then determine if it is a Scam or Safe.
-        
-        Original Message: "{original_text}"
-        Preprocessed Lemmas: "{nlp_data['cleaned_text']}"
-        Extracted Keywords: {nlp_data['keywords']}
-        Named Entities: {nlp_data['entities']}
-        
-        You MUST respond with a single valid JSON object containing exactly the following keys:
-        - "prediction": Either "Scam" or "Safe"
-        - "probability": An integer from 0 to 100 representing the scam confidence/probability (0 means definitely safe, 100 means definitely a scam)
-        - "reasons": A list of strings (2-4 reasons) explaining why you made this prediction based on language cues, urgency, links, request for info, etc.
-        - "recommendations": A list of strings (2-3 recommendations) on how the user should handle this message safely.
-        
-        Return ONLY the raw JSON object. Do not include markdown formatting or backticks in your output.
-        """
-        
+        model = genai.GenerativeModel("gemini-3.6-flash")
+
+        prompt = f"""You are ScamShield, an advanced cybersecurity AI specialized in detecting scam messages, phishing attempts, spam, financial fraud, and social engineering attacks in WhatsApp, SMS, email, and social media communications.
+
+Your task is to analyze the provided message and determine whether it is a scam or safe.
+
+## SCAM PATTERNS TO DETECT
+
+Check the message for the following scam indicator categories:
+
+### 1. Impersonation & Authority spoofing
+The sender pretends to be a trusted entity (bank, government, WhatsApp, company, family member, friend, or authority figure). Look for claims like "your bank", "WhatsApp support", "government agency", "from [CEO name]", or impersonating known contacts.
+
+### 2. Urgency & Pressure
+Messages that demand immediate action create panic: "act now", "limited time", "your account will be locked", "last chance", "immediately", "respond within hours", "do not delay", "final warning". These pressure Tactics prevent victims from thinking critically.
+
+### 3. Emotional Manipulation
+Messages exploit fear, greed, sympathy, or curiosity: fake emergencies from "family", lottery wins, unexpected inheritances, sympathy scams, romance bait, or shocking claims designed to override rational thinking.
+
+### 4. Financial Lures
+Requests for money, crypto investments, fake job offers promising high pay, "pay to unlock" offers, inheritance notifications, fake lotteries, investment schemes, or requests for payment via gift cards, crypto, wire transfer, Zelle, etc.
+
+### 5. Credential & Data Theft
+Requests for passwords, OTPs, verification codes, SSN, bank details, credit card numbers, login links, or asking the recipient to "verify" their account on a linked website.
+
+### 6. Malicious Links & Attachments
+URLs (especially shortened ones like bit.ly, tinyurl), download links, or attachments that install malware, phishing forms, or unauthorized access tools.
+
+### 7. Tech Support Scams
+Claims that your device is infected, compromised, or has a virus, directing you to call a fake support number, install remote access software, or visit a fraudulent website.
+
+### 8. Romance & Relationship Scams
+Building emotional connection to eventually request money, crypto, gift cards, or personal financial information. Common on dating apps and social media.
+
+### 9. Government & Legal Threats
+Messages claiming legal action, outstanding warrants, unpaid taxes, frozen accounts, or mandatory court appearances requiring immediate payment or personal info.
+
+### 10. Fake Giveaway & Giveaway Bait
+"Win a prize", "free iPhone", "claim your reward", requiring the user to click a link, pay a "processing fee", or share the message with contacts.
+
+## ANALYSIS PROCESS
+
+For each message, systematically check ALL of the above categories. For each category that matches, note the specific indicators found. Combine the evidence to determine the overall threat level.
+
+Consider:
+- The tone and language patterns
+- Whether the message creates artificial urgency
+- Whether it requests sensitive information or money
+- Whether it contains suspicious links or attachments
+- Whether the sender identity is unverifiable or spoofed
+- Whether the offer seems too good to be true
+
+## REQUIRED OUTPUT FORMAT
+
+You MUST respond with a single valid JSON object with exactly these keys:
+
+- "prediction": Either "Scam" or "Safe"
+- "probability": An integer from 0 to 100 where 0 means definitely safe and 100 means definitely a scam
+- "reasons": A list of 2-4 strings explaining the specific scam indicators detected. Reference the scam pattern category (from the 10 categories above) and the specific evidence found in the message.
+- "recommendations": A list of 2-3 actionable strings advising the user on how to handle this message safely (e.g., "do not click the link", "do not share your OTP", "contact the organization directly through official channels").
+
+Return ONLY the raw JSON object. Do not include markdown formatting, code blocks, or any explanatory text outside the JSON.
+
+## MESSAGE TO ANALYZE
+
+Original Message: "{original_text}"
+Preprocessed Lemmas: "{nlp_data['cleaned_text']}"
+Extracted Keywords: {nlp_data['keywords']}
+Named Entities: {nlp_data['entities']}
+"""
+
         response = model.generate_content(
             prompt,
             generation_config={"response_mime_type": "application/json"}
         )
-        
+
         result_json = response.text.strip()
-        
-        # Clean up any potential markdown wrap, just in case
+
         if result_json.startswith("```json"):
             result_json = result_json[7:]
         if result_json.endswith("```"):
             result_json = result_json[:-3]
-            
+
         data = json.loads(result_json.strip())
         return data
-        
+
     except Exception as e:
         logger.error(f"Gemini API analysis failed: {e}. Falling back to simulated analysis.")
         logger.warning("TIP: Check that GEMINI_API_KEY in your .env is a valid Google AI API key (should start with 'AIza').")
@@ -77,7 +126,10 @@ def get_mock_analysis(original_text: str, nlp_data: dict) -> dict:
     high_severity = [
         "gift card", "claim your", "irs", "unauthorized login", "ssn",
         "social security", "verify your account", "account suspended",
-        "identity theft", "wire transfer", "western union", "moneygram"
+        "identity theft", "wire transfer", "western union", "moneygram",
+        "usps", "package could not be delivered", "temporarily restricted",
+        "verify your identity", "dropped my phone", "broken phone", "zelle",
+        "phone fell in water", "this is my new number", "hi mum", "hi mom", "hi dad"
     ]
     high_matches = [kw for kw in high_severity if kw in text_lower]
     score += len(high_matches) * 15
@@ -90,7 +142,10 @@ def get_mock_analysis(original_text: str, nlp_data: dict) -> dict:
         "limited time", "exclusive offer", "risk free", "guaranteed",
         "click here", "click below", "click the link", "whatsapp me",
         "send money", "transfer funds", "police", "arrest", "warrant",
-        "legal action", "court order", "tax refund"
+        "legal action", "court order", "tax refund", "delivery details",
+        "return to sender", "bank alert", "suspicious activity",
+        "pay a bill", "processing fee", "pay my rent", "can you transfer",
+        "transfer money", "my new number"
     ]
     medium_matches = [kw for kw in medium_severity if kw in text_lower]
     score += len(medium_matches) * 8
@@ -100,10 +155,21 @@ def get_mock_analysis(original_text: str, nlp_data: dict) -> dict:
         "win", "free", "offer", "deal", "discount", "password",
         "bank account", "suspend", "expire", "confirm", "update your",
         "dear customer", "dear user", "dear sir", "selected", "chosen",
-        "immediately", "asap", "right away", "don't delay"
+        "immediately", "asap", "right away", "don't delay", "alert",
+        "restricted", "access"
     ]
     low_matches = [kw for kw in low_severity if kw in text_lower]
     score += len(low_matches) * 3
+
+    # --- Pattern Analysis: Impersonation / "Hi Mum" (weight: 15 each) ---
+    impersonation_patterns = [
+        r"hi\s+(mum|mom|dad|mother|father)",
+        r"this\s+is\s+(my\s+)?new\s+number",
+        r"phone\s+(fell|dropped)\s+in\s+(the\s+)?water",
+        r"phone\s+is\s+broken"
+    ]
+    impersonation_count = sum(1 for p in impersonation_patterns if re.search(p, text_lower))
+    score += impersonation_count * 15
 
     # --- Pattern Analysis: URLs (weight: 10 for suspicious URLs) ---
     urls = re.findall(r'https?://\S+', text_lower)
@@ -111,25 +177,26 @@ def get_mock_analysis(original_text: str, nlp_data: dict) -> dict:
     has_suspicious_url = False
     for url in urls:
         if any(domain in url for domain in shortened_url_domains):
-            score += 12
+            score += 15
             has_suspicious_url = True
         else:
             # Any URL adds some suspicion
-            score += 5
+            score += 8
             has_suspicious_url = True
 
     # --- Pattern Analysis: Urgency phrases (weight: 6 each) ---
     urgency_phrases = [
         r"act\s+now", r"don'?t\s+ignore", r"last\s+chance", r"final\s+warning",
         r"respond\s+immediately", r"within\s+\d+\s+hours?", r"expires?\s+today",
-        r"time\s+is\s+running\s+out", r"hurry", r"before\s+it'?s?\s+too\s+late"
+        r"time\s+is\s+running\s+out", r"hurry", r"before\s+it'?s?\s+too\s+late",
+        r"urgent(?:ly)?", r"immediately", r"today"
     ]
     urgency_count = sum(1 for p in urgency_phrases if re.search(p, text_lower))
     score += urgency_count * 6
 
     # --- Pattern Analysis: Requests for personal information (weight: 10 each) ---
     personal_info_patterns = [
-        r"(send|provide|share|confirm|verify)\s+(your|ur)\s+(password|ssn|social|account|pin|otp|code|credit\s*card)",
+        r"(send|provide|share|confirm|verify)\s+(your|ur)\s+(password|ssn|social|account|pin|otp|code|credit\s*card|identity)",
         r"(bank|account|card)\s+(number|details|information|info)",
         r"(date\s+of\s+birth|mother'?s?\s+maiden|security\s+question)"
     ]
@@ -140,7 +207,8 @@ def get_mock_analysis(original_text: str, nlp_data: dict) -> dict:
     financial_patterns = [
         r"\$\d+", r"£\d+", r"₹\d+", r"\d+\s*dollars?", r"\d+\s*rupees?",
         r"(million|billion|thousand)\s+(dollars?|pounds?|euros?)",
-        r"(money|cash|funds?|payment)\s+(transfer|send|deposit|receive)"
+        r"(money|cash|funds?|payment)\s+(transfer|send|deposit|receive|pay)",
+        r"pay\s+you\s+back", r"pay\s+my\s+rent", r"transfer\s+\$\d+"
     ]
     financial_count = sum(1 for p in financial_patterns if re.search(p, text_lower))
     score += financial_count * 5

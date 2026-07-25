@@ -1,47 +1,94 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import ScanForm from "./components/ScanForm";
 import ResultDisplay from "./components/ResultDisplay";
 import Dashboard from "./components/Dashboard";
 import HistoryList from "./components/HistoryList";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { ShieldAlert, ShieldCheck } from "lucide-react";
+import { ShieldAlert, X } from "lucide-react";
+
+const LOADING_MESSAGES = [
+  { text: "Running NLP Preprocessing & AI Threat Scan...", sub: "Analyzing with Gemini AI · spaCy · NLTK" },
+  { text: "Tokenizing message & removing stop words...", sub: "spaCy Core NLP Pipeline" },
+  { text: "Performing Named Entity Recognition (NER)...", sub: "NLTK Entity Extractor" },
+  { text: "Evaluating urgency markers & threat patterns...", sub: "Heuristic Threat Engine" },
+  { text: "Connecting to Gemini AI for deep scam signature check...", sub: "Google Gemini 2.0 API" },
+  { text: "Evaluating suspicious links & domain reputations...", sub: "URL Scan Protocol" },
+  { text: "Synthesizing safety index & security recommendations...", sub: "ScamShield Risk Core" }
+];
+
+function LoadingDisplay() {
+  const [msgIndex, setMsgIndex] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setMsgIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
+        setFade(true);
+      }, 300);
+    }, 2800);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentMsg = LOADING_MESSAGES[msgIndex];
+
+  return (
+    <div className="analyzing-container">
+      <div className="spinner-wrap">
+        <div className="spinner" />
+        <div className="spinner-inner" />
+      </div>
+      <div
+        style={{
+          transition: "opacity 0.3s ease-in-out, transform 0.3s ease-in-out",
+          opacity: fade ? 1 : 0,
+          transform: fade ? "translateY(0)" : "translateY(5px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "0.25rem",
+        }}
+      >
+        <p className="pulse-text">{currentMsg.text}</p>
+        <p className="pulse-sub">{currentMsg.sub}</p>
+      </div>
+    </div>
+  );
+}
 
 function MainContent() {
   const [activeTab, setActiveTab] = useState("scan");
   const [scanResult, setScanResult] = useState(null);
   const [scanLoading, setScanLoading] = useState(false);
   const [scanError, setScanError] = useState(null);
+  const [showResult, setShowResult] = useState(false);
   const { getToken } = useAuth();
 
   const handleScan = async (messageText) => {
     setScanLoading(true);
     setScanError(null);
     setScanResult(null);
+    setShowResult(false);
 
     try {
-      const headers = {
-        "Content-Type": "application/json"
-      };
-
-      // Get ID token if user is signed in
+      const headers = { "Content-Type": "application/json" };
       const token = await getToken();
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      if (token) headers["Authorization"] = `Bearer ${token}`;
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/scan`, {
         method: "POST",
-        headers: headers,
-        body: JSON.stringify({ message: messageText })
+        headers,
+        body: JSON.stringify({ message: messageText }),
       });
 
-      if (!response.ok) {
-        throw new Error("Analysis failed. Please check backend status.");
-      }
+      if (!response.ok) throw new Error("Analysis failed. Please check backend status.");
 
       const data = await response.json();
       setScanResult(data);
+      setTimeout(() => setShowResult(true), 80);
     } catch (err) {
       console.error(err);
       setScanError("Failed to communicate with ScamShield API. Ensure the backend server is running.");
@@ -50,84 +97,86 @@ function MainContent() {
     }
   };
 
+  const handleViewHistoryResult = (resultItem) => {
+    setScanResult({
+      prediction: resultItem.prediction,
+      probability: resultItem.probability,
+      reasons: resultItem.reasons,
+      recommendations: resultItem.recommendations,
+      nlp_data: resultItem.nlp_data,
+      saved: true,
+      scan_id: resultItem.id,
+    });
+    setShowResult(true);
+    setActiveTab("scan");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCloseResult = () => {
+    setShowResult(false);
+    setTimeout(() => {
+      setScanResult(null);
+      setScanError(null);
+    }, 300);
+  };
+
   return (
     <div className="app-container">
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
-      
+
+
+
       <main className="content-container">
         {activeTab === "scan" && (
-          <div>
-            <div className="page-title-section">
-              <h2>Scam Message Scanner</h2>
-              <p className="page-subtitle">Instantly analyze messages, emails, or links for scam indicators.</p>
-            </div>
-            
+          <div className="scan-layout">
+            {/* Scan Form */}
             <ScanForm onScan={handleScan} loading={scanLoading} />
-            
+
+            {/* Loading state */}
             {scanLoading && (
-              <div className="card" style={{ marginTop: "2rem" }}>
-                <div className="analyzing-container">
-                  <div className="spinner"></div>
-                  <p className="pulse-text">Running NLP Preprocessing & AI Threat Scan...</p>
+              <div className="card animate-fade-up" style={{ padding: "0" }}>
+                <LoadingDisplay />
+              </div>
+            )}
+
+            {/* Error state */}
+            {scanError && !scanLoading && (
+              <div className="card animate-fade-up" style={{ borderLeft: "4px solid var(--danger)", padding: "1.25rem 1.5rem" }}>
+                <div style={{ display: "flex", gap: "0.875rem", alignItems: "center" }}>
+                  <ShieldAlert size={24} style={{ color: "var(--danger)", flexShrink: 0 }} />
+                  <div>
+                    <p style={{ color: "var(--danger)", fontWeight: 700, fontSize: "0.9rem" }}>Analysis Failed</p>
+                    <p style={{ color: "var(--muted-fg)", fontSize: "0.82rem", marginTop: "0.2rem" }}>{scanError}</p>
+                  </div>
                 </div>
               </div>
             )}
 
-            {scanError && (
-              <div className="card" style={{ marginTop: "2rem", borderLeft: "4px solid var(--color-danger)" }}>
-                <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-                  <ShieldAlert size={28} style={{ color: "var(--color-danger)", flexShrink: 0 }} />
-                  <p style={{ color: "var(--color-danger)", fontWeight: 500 }}>{scanError}</p>
+            {/* Result — shown below form */}
+            {scanResult && showResult && (
+              <div className="scan-result-wrapper">
+                <div className="result-close-row">
+                  <button className="result-close-btn" onClick={handleCloseResult}>
+                    <X size={13} />
+                    Close Results
+                  </button>
                 </div>
+                <ResultDisplay result={scanResult} />
               </div>
-            )}
-
-            {!scanLoading && scanResult && (
-              <ResultDisplay result={scanResult} />
             )}
           </div>
         )}
 
         {activeTab === "dashboard" && (
-          <Dashboard 
-            setActiveTab={setActiveTab} 
-            setViewResult={(resultItem) => {
-              // Map saved history schema to result display schema
-              setScanResult({
-                prediction: resultItem.prediction,
-                probability: resultItem.probability,
-                reasons: resultItem.reasons,
-                recommendations: resultItem.recommendations,
-                nlp_data: resultItem.nlp_data,
-                saved: true,
-                scan_id: resultItem.id
-              });
-            }} 
-          />
+          <Dashboard setActiveTab={setActiveTab} setViewResult={handleViewHistoryResult} />
         )}
 
         {activeTab === "history" && (
-          <HistoryList 
-            setActiveTab={setActiveTab} 
-            setViewResult={(resultItem) => {
-              // Map saved history schema to result display schema
-              setScanResult({
-                prediction: resultItem.prediction,
-                probability: resultItem.probability,
-                reasons: resultItem.reasons,
-                recommendations: resultItem.recommendations,
-                nlp_data: resultItem.nlp_data,
-                saved: true,
-                scan_id: resultItem.id
-              });
-            }} 
-          />
+          <HistoryList setActiveTab={setActiveTab} setViewResult={handleViewHistoryResult} />
         )}
       </main>
 
-      <footer className="footer">
-        <p>&copy; {new Date().getFullYear()} <span>ScamShield</span>. Powered by Google Gemini AI, spaCy, and FastAPI.</p>
-      </footer>
+
     </div>
   );
 }

@@ -175,3 +175,32 @@ def get_dashboard_stats(user_id: str) -> dict:
         "safe_count": safe_count,
         "recent_scans": recent_scans
     }
+
+def upsert_user(user_id: str, user_data: dict) -> dict:
+    """
+    Saves or updates user profile details in the database.
+    """
+    user_doc = {
+        "uid": user_id,
+        "email": user_data.get("email"),
+        "name": user_data.get("name"),
+        "photo_url": user_data.get("photo_url"),
+        "last_login": datetime.utcnow().isoformat() + "Z"
+    }
+    
+    if not settings.USE_MOCK_DATABASE and firebase_initialized:
+        try:
+            doc_ref = db.collection("users").document(user_id)
+            doc_ref.set(user_doc, merge=True)
+            return user_doc
+        except Exception as e:
+            logger.error(f"Firestore upsert_user failed: {e}. Falling back to mock save.")
+            
+    # Mock save
+    mock_data = read_mock_db()
+    if "_users" not in mock_data:
+        mock_data["_users"] = {}
+    mock_data["_users"][user_id] = user_doc
+    write_mock_db(mock_data)
+    return user_doc
+

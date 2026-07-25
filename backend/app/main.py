@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import scan, history
+from app.routers import scan, history, auth
 
 app = FastAPI(
     title="ScamShield API",
@@ -9,10 +9,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS so React (running on Port 5173) can consume this API
+# Configure CORS so React can consume this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -21,6 +26,7 @@ app.add_middleware(
 # Register routes
 app.include_router(scan.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
 
 @app.get("/")
 def health_check():

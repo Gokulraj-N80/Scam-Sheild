@@ -3,7 +3,7 @@ import { Trash2, Eye, RefreshCw, ShieldAlert, History } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function HistoryList({ setActiveTab, setViewResult }) {
-  const { getToken } = useAuth();
+  const { getToken, user } = useAuth();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,8 +15,8 @@ export default function HistoryList({ setActiveTab, setViewResult }) {
       const token = await getToken();
       const response = await fetch(`${import.meta.env.VITE_API_URL}/history`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
@@ -27,14 +27,18 @@ export default function HistoryList({ setActiveTab, setViewResult }) {
       setHistory(data);
     } catch (err) {
       console.error(err);
-      setError("Failed to retrieve scan history. Is the backend service active?");
+      setError("Failed to retrieve scan history.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchHistory();
+    if (user) {
+      fetchHistory();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const handleDelete = async (scanId) => {
@@ -47,15 +51,14 @@ export default function HistoryList({ setActiveTab, setViewResult }) {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/history/${scanId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
         throw new Error("Failed to delete record");
       }
 
-      // Update state to remove item immediately
       setHistory((prevHistory) => prevHistory.filter((item) => item.id !== scanId));
     } catch (err) {
       alert("Error: " + err.message);
@@ -70,116 +73,117 @@ export default function HistoryList({ setActiveTab, setViewResult }) {
   const formatDate = (isoString) => {
     try {
       const date = new Date(isoString);
-      return date.toLocaleDateString(undefined, { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } catch {
       return "Unknown Date";
     }
   };
 
+  if (!user) {
+    return null;
+  }
+
   if (loading) {
     return (
-      <div className="analyzing-container">
-        <div className="spinner"></div>
-        <p className="pulse-text">Loading scan history logs...</p>
+      <div style={{ padding: "2rem 0", textAlign: "center", color: "var(--muted-fg)" }}>
+        <p style={{ fontSize: "0.9rem" }}>Loading scan history...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="card" style={{ textAlign: "center", padding: "2.5rem" }}>
-        <ShieldAlert size={48} style={{ color: "var(--color-danger)", marginBottom: "1rem" }} />
-        <p style={{ color: "var(--color-danger)", fontWeight: 600, marginBottom: "1rem" }}>{error}</p>
-        <button className="btn btn-secondary" onClick={fetchHistory}>
-          <RefreshCw size={14} /> Try Reloading
+      <div className="card" style={{ marginTop: "1.5rem", textAlign: "center", padding: "1.5rem" }}>
+        <ShieldAlert size={32} style={{ color: "var(--danger)", marginBottom: "0.75rem" }} />
+        <p style={{ color: "var(--danger)", fontWeight: 500, fontSize: "0.9rem", marginBottom: "0.75rem" }}>{error}</p>
+        <button className="btn btn-secondary btn-sm" onClick={fetchHistory}>
+          <RefreshCw size={12} /> Retry
         </button>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="page-title-section">
-        <h2>Scan Logs & History</h2>
-        <p className="page-subtitle">Inspect, re-examine, or delete previous message checks.</p>
-      </div>
-
+    <div style={{ marginTop: "2rem" }} className="animate-fade-up">
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
-          <h3 style={{ display: "flex", alignParagraph: "center", gap: "0.5rem" }}>
-            <History size={20} style={{ color: "var(--color-primary)" }} />
-            History Log ({history.length} records)
-          </h3>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+          <h4 style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontFamily: "var(--font-display)" }}>
+            <History size={18} style={{ color: "var(--primary)" }} />
+            Records ({history.length})
+          </h4>
           <button className="btn btn-secondary btn-sm" onClick={fetchHistory} title="Reload history">
-            <RefreshCw size={14} />
+            <RefreshCw size={12} />
           </button>
         </div>
 
         {history.length === 0 ? (
-          <div className="empty-state">
-            <History size={48} />
-            <p>Your scan log is empty. Any scans you execute while logged in will appear here.</p>
-            <button className="btn btn-primary" onClick={() => setActiveTab("scan")}>
-              Scan First Message
-            </button>
+          <div className="empty-state" style={{ padding: "1.5rem" }}>
+            <History size={32} />
+            <p style={{ fontSize: "0.85rem" }}>No scan history yet.</p>
           </div>
         ) : (
           <div className="history-table-container">
             <table className="history-table">
               <thead>
                 <tr>
-                  <th>Original Message Preview</th>
+                  <th>Message Preview</th>
                   <th>Classification</th>
                   <th>Threat Score</th>
-                  <th>Scan Date</th>
+                  <th>Date</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {history.map((scan) => (
                   <tr key={scan.id}>
-                    <td>
+                    <td data-label="Message Preview">
                       <div className="msg-preview" title={scan.message}>
                         {scan.message}
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Classification">
                       <span className={`badge ${scan.prediction === "Scam" ? "scam" : "safe"}`}>
                         {scan.prediction}
                       </span>
                     </td>
-                    <td>
-                      <strong style={{ color: scan.prediction === "Scam" ? "var(--color-danger)" : "var(--color-success)" }}>
-                        {scan.probability}%
-                      </strong>
+                    <td data-label="Threat Score">
+                      <div className="score-cell">
+                        <strong style={{ color: scan.prediction === "Scam" ? "var(--danger)" : "var(--success)" }}>
+                          {scan.probability}%
+                        </strong>
+                        <div className="score-bar-track">
+                          <div
+                            className={`score-bar-fill ${scan.prediction === "Scam" ? "scam" : "safe"}`}
+                            style={{ width: `${scan.probability}%`, animation: "none" }}
+                          />
+                        </div>
+                      </div>
                     </td>
-                    <td style={{ color: "var(--color-text-secondary)" }}>
+                    <td data-label="Date" style={{ color: "var(--muted-fg)", fontSize: "0.8rem", whiteSpace: "nowrap" }}>
                       {formatDate(scan.timestamp)}
                     </td>
-                    <td>
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
-                        <button 
-                          className="btn btn-secondary btn-sm" 
+                    <td data-label="Actions" style={{ whiteSpace: "nowrap" }}>
+                      <div style={{ display: "flex", gap: "0.35rem" }}>
+                        <button
+                          className="btn btn-secondary btn-sm"
                           onClick={() => handleInspect(scan)}
-                          style={{ display: "inline-flex", padding: "0.25rem 0.6rem" }}
-                          title="Inspect Details"
+                          style={{ display: "inline-flex", padding: "0.22rem 0.5rem", fontSize: "0.75rem", gap: "0.25rem" }}
                         >
-                          <Eye size={13} />
-                          View
+                          <Eye size={11} /> View
                         </button>
-                        <button 
-                          className="btn btn-secondary btn-sm btn-danger" 
+                        <button
+                          className="btn btn-danger btn-sm"
                           onClick={() => handleDelete(scan.id)}
-                          style={{ display: "inline-flex", padding: "0.25rem 0.6rem" }}
-                          title="Delete Record"
+                          style={{ display: "inline-flex", padding: "0.22rem 0.5rem", fontSize: "0.75rem", gap: "0.25rem" }}
+                          title="Delete record"
                         >
-                          <Trash2 size={13} />
+                          <Trash2 size={11} />
                         </button>
                       </div>
                     </td>

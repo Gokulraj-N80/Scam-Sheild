@@ -1,113 +1,155 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { auth, googleProvider, useMockAuth } from "../firebase";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useGoogleLogin } from "@react-oauth/google";
+import { useMockAuth } from "../firebase";
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider = ({ children }) => {
+// Internal component that uses the useGoogleLogin hook
+// (must be inside GoogleOAuthProvider which is set up in main.jsx)
+function AuthProviderInner({ children }) {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize Auth state
-  useEffect(() => {
-    if (useMockAuth) {
-      // Mock Authentication Flow
-      const cachedUser = localStorage.getItem("scamshield_mock_user");
-      if (cachedUser) {
-        setUser(JSON.parse(cachedUser));
-      }
-      setLoading(false);
-    } else if (auth) {
-      // Real Firebase Auth Flow
-      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        if (firebaseUser) {
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName || "Firebase User",
-            photoURL: firebaseUser.photoURL || "https://api.dicebear.com/7.x/identicon/svg?seed=shield"
-          });
-        } else {
-          setUser(null);
-        }
-        setLoading(false);
+  // ---------------------------------------------------------------------------
+  // Sync user profile to backend (Firebase Firestore via backend)
+  // ---------------------------------------------------------------------------
+  const syncUserWithBackend = useCallback(async (profile, accessToken) => {
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL}/auth/sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          email: profile.email,
+          name: profile.name,
+          photo_url: profile.picture,
+        }),
       });
-      return unsubscribe;
-    } else {
-      setLoading(false);
+    } catch (err) {
+      console.error("Failed to sync user with backend:", err);
     }
   }, []);
 
+  // ---------------------------------------------------------------------------
+  // Restore session from localStorage on mount
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (useMockAuth) {
+      const cached = localStorage.getItem("scamshield_mock_user");
+      if (cached) {
+        const parsedUser = JSON.parse(cached);
+        const mockToken = `mock_${parsedUser.uid}|${parsedUser.email}|${parsedUser.name}`;
+        setUser(parsedUser);
+        setToken(mockToken);
+        syncUserWithBackend(parsedUser, mockToken);
+      }
+      setLoading(false);
+    } else {
+      const cachedUser = localStorage.getItem("scamshield_user");
+      const cachedToken = localStorage.getItem("scamshield_token");
+      if (cachedUser && cachedToken) {
+        setUser(JSON.parse(cachedUser));
+        setToken(cachedToken);
+      }
+      setLoading(false);
+    }
+  }, [syncUserWithBackend]);
+
+  // ---------------------------------------------------------------------------
+  // Google OAuth login (real) — triggered via useGoogleLogin hook
+  // ---------------------------------------------------------------------------
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const accessToken = tokenResponse.access_token;
+
+        // Fetch user profile from Google
+        const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const profile = await res.json();
+        // profile contains: id, email, name, picture, given_name, family_name
+
+        const userObj = {
+          uid: profile.id,
+          email: profile.email,
+          name: profile.name,
+          picture: profile.picture,
+          // Keep displayName and photoURL aliases for Navbar compatibility
+          displayName: profile.name,
+          photoURL: profile.picture,
+        };
+
+        setUser(userObj);
+        setToken(accessToken);
+        localStorage.setItem("scamshield_user", JSON.stringify(userObj));
+        localStorage.setItem("scamshield_token", accessToken);
+
+        await syncUserWithBackend(userObj, accessToken);
+        setLoading(false);
+      } catch (err) {
+        console.error("Failed to fetch Google user info:", err);
+        setLoading(false);
+      }
+    },
+    onError: (err) => {
+      console.error("Google Sign-In failed:", err);
+      setLoading(false);
+    },
+  });
+
+  // ---------------------------------------------------------------------------
+  // loginWithGoogle — exposed to consumers
+  // ---------------------------------------------------------------------------
   const loginWithGoogle = async () => {
     setLoading(true);
     if (useMockAuth) {
-      // Mock Sign In
       const mockUser = {
         uid: "mock_user_123",
         email: "demo.user@scamshield.local",
+        name: "Demo User",
+        picture: "https://api.dicebear.com/7.x/bottts/svg?seed=scamshield",
         displayName: "Demo User",
-        photoURL: "https://api.dicebear.com/7.x/bottts/svg?seed=scamshield"
+        photoURL: "https://api.dicebear.com/7.x/bottts/svg?seed=scamshield",
       };
+      const mockToken = `mock_${mockUser.uid}|${mockUser.email}|${mockUser.name}`;
       localStorage.setItem("scamshield_mock_user", JSON.stringify(mockUser));
       setUser(mockUser);
+      setToken(mockToken);
+      await syncUserWithBackend(mockUser, mockToken);
       setLoading(false);
       return mockUser;
-    } else if (auth && googleProvider) {
-      try {
-        const result = await signInWithPopup(auth, googleProvider);
-        const firebaseUser = result.user;
-        const profile = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName || "Firebase User",
-          photoURL: firebaseUser.photoURL || "https://api.dicebear.com/7.x/identicon/svg?seed=shield"
-        };
-        setUser(profile);
-        setLoading(false);
-        return profile;
-      } catch (error) {
-        setLoading(false);
-        console.error("Google Sign-In failed:", error);
-        throw error;
-      }
+    } else {
+      // Triggers the Google OAuth popup
+      googleLogin();
     }
   };
 
-  const logout = async () => {
-    setLoading(true);
+  // ---------------------------------------------------------------------------
+  // logout
+  // ---------------------------------------------------------------------------
+  const logout = () => {
+    setUser(null);
+    setToken(null);
     if (useMockAuth) {
       localStorage.removeItem("scamshield_mock_user");
-      setUser(null);
-      setLoading(false);
-    } else if (auth) {
-      try {
-        await signOut(auth);
-        setUser(null);
-        setLoading(false);
-      } catch (error) {
-        setLoading(false);
-        console.error("Sign-Out failed:", error);
-      }
+    } else {
+      localStorage.removeItem("scamshield_user");
+      localStorage.removeItem("scamshield_token");
     }
   };
 
-  const getToken = async () => {
-    if (useMockAuth) {
-      if (!user) return null;
-      // Encode user info as a mock token: mock_uid|email|displayName
-      return `mock_${user.uid}|${user.email}|${user.displayName}`;
-    } else if (auth && auth.currentUser) {
-      try {
-        return await auth.currentUser.getIdToken();
-      } catch (error) {
-        console.error("Failed to fetch Firebase ID token:", error);
-        return null;
-      }
-    }
-    return null;
-  };
+  // ---------------------------------------------------------------------------
+  // getToken — used by App.jsx for scan API calls
+  // ---------------------------------------------------------------------------
+  const getToken = useCallback(async () => {
+    return token || null;
+  }, [token]);
 
   const value = {
     user,
@@ -115,8 +157,12 @@ export const AuthProvider = ({ children }) => {
     loginWithGoogle,
     logout,
     getToken,
-    isMock: useMockAuth
+    isMock: useMockAuth,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export const AuthProvider = ({ children }) => {
+  return <AuthProviderInner>{children}</AuthProviderInner>;
 };

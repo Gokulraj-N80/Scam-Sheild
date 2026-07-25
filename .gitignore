@@ -52,3 +52,9 @@ mock_db.json
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Log files
+*_error.txt
+*_log.txt
+*.log
+frontend/frontend_log.txt
