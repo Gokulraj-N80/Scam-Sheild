@@ -8,13 +8,16 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ShieldAlert, X } from "lucide-react";
 
 const LOADING_MESSAGES = [
-  { text: "Running NLP Preprocessing & AI Threat Scan...", sub: "Analyzing with Gemini AI · spaCy · NLTK" },
-  { text: "Tokenizing message & removing stop words...", sub: "spaCy Core NLP Pipeline" },
-  { text: "Performing Named Entity Recognition (NER)...", sub: "NLTK Entity Extractor" },
-  { text: "Evaluating urgency markers & threat patterns...", sub: "Heuristic Threat Engine" },
-  { text: "Connecting to Gemini AI for deep scam signature check...", sub: "Google Gemini 2.0 API" },
-  { text: "Evaluating suspicious links & domain reputations...", sub: "URL Scan Protocol" },
-  { text: "Synthesizing safety index & security recommendations...", sub: "ScamShield Risk Core" }
+  { text: "🛡️ Initializing ScamShield AI Engine...", sub: "Booting Threat Detection Core · Loading Security Modules" },
+  { text: "🔤 Preprocessing text...", sub: "Tokenizing · Normalizing · Removing Stop Words" },
+  { text: "✂️ Stripping unnecessary words...", sub: "Lemmatization · POS Filtering · spaCy NLP Pipeline" },
+  { text: "🔍 Extracting key phrases & entities...", sub: "Named Entity Recognition · NLTK Keyword Extractor" },
+  { text: "🧠 Analyzing language patterns...", sub: "Heuristic Threat Engine · Semantic Context Analysis" },
+  { text: "🌐 Scanning URLs and domains...", sub: "Domain Reputation Check · Malicious Link Detection" },
+  { text: "🤖 Running Gemini 3.6 Flash inference...", sub: "Google Gemini 3.6 Flash API · Scam Signature Match" },
+  { text: "⚠️ Calculating scam probability score...", sub: "Weighted Risk Scoring · Fraud Pattern Correlation" },
+  { text: "📊 Assessing overall threat level...", sub: "ScamShield Risk Core · Safety Index Computation" },
+  { text: "✅ Compiling analysis report...", sub: "Generating Reasons · Building Recommendations" },
 ];
 
 function LoadingDisplay() {

@@ -1,30 +1,30 @@
 import json
 import logging
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Configure Gemini if key is provided
+# Create Gemini client if key is provided
+_gemini_client = None
 if settings.GEMINI_API_KEY:
     try:
-        genai.configure(api_key=settings.GEMINI_API_KEY)
+        _gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        logger.info("Google Gemini client initialized successfully.")
     except Exception as e:
-        logger.error(f"Failed to configure Google Gemini API: {e}")
+        logger.error(f"Failed to initialize Google Gemini client: {e}")
 
 def analyze_message(original_text: str, nlp_data: dict) -> dict:
     """
     Sends preprocessed text and metadata to Gemini to analyze if it's a scam.
     If GEMINI_API_KEY is missing, falls back to a rule-based mock analysis.
     """
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY.strip() == "":
+    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY.strip() == "" or _gemini_client is None:
         logger.warning("GEMINI_API_KEY is not configured. Running in Mock/Simulated AI mode.")
         return get_mock_analysis(original_text, nlp_data)
 
-    try:
-        model = genai.GenerativeModel("gemini-3.6-flash")
-
-        prompt = f"""You are ScamShield, an advanced cybersecurity AI specialized in detecting scam messages, phishing attempts, spam, financial fraud, and social engineering attacks in WhatsApp, SMS, email, and social media communications.
+    prompt = f"""You are ScamShield, an advanced cybersecurity AI specialized in detecting scam messages, phishing attempts, spam, financial fraud, and social engineering attacks in WhatsApp, SMS, email, and social media communications.
 
 Your task is to analyze the provided message and determine whether it is a scam or safe.
 
@@ -80,8 +80,8 @@ You MUST respond with a single valid JSON object with exactly these keys:
 
 - "prediction": Either "Scam" or "Safe"
 - "probability": An integer from 0 to 100 where 0 means definitely safe and 100 means definitely a scam
-- "reasons": A list of 2-4 strings explaining the specific scam indicators detected. Reference the scam pattern category (from the 10 categories above) and the specific evidence found in the message.
-- "recommendations": A list of 2-3 actionable strings advising the user on how to handle this message safely (e.g., "do not click the link", "do not share your OTP", "contact the organization directly through official channels").
+- "reasons": A list of 2-3 SHORT strings (max 8 words each) naming the scam type detected. Keep it simple, e.g. "Fake urgency to click a link", "Impersonates Google", "Suspicious third-party URL".
+- "recommendations": A list of 2-3 SHORT strings (max 8 words each) telling the user what to do. e.g. "Do not click any links.", "Report as phishing.", "Verify via official website.".
 
 Return ONLY the raw JSON object. Do not include markdown formatting, code blocks, or any explanatory text outside the JSON.
 
@@ -93,9 +93,13 @@ Extracted Keywords: {nlp_data['keywords']}
 Named Entities: {nlp_data['entities']}
 """
 
-        response = model.generate_content(
-            prompt,
-            generation_config={"response_mime_type": "application/json"}
+    try:
+        response = _gemini_client.models.generate_content(
+            model="gemini-3.6-flash",  # Google Gemini 3.6 Flash — fast, efficient LLM for scam analysis
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json"
+            )
         )
 
         result_json = response.text.strip()
@@ -110,7 +114,7 @@ Named Entities: {nlp_data['entities']}
 
     except Exception as e:
         logger.error(f"Gemini API analysis failed: {e}. Falling back to simulated analysis.")
-        logger.warning("TIP: Check that GEMINI_API_KEY in your .env is a valid Google AI API key (should start with 'AIza').")
+        logger.warning("TIP: Check that GEMINI_API_KEY in your .env is a valid Google AI API key (starts with 'AIza' or 'AQ.').")
         return get_mock_analysis(original_text, nlp_data)
 
 def get_mock_analysis(original_text: str, nlp_data: dict) -> dict:
