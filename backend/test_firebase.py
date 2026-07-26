@@ -3,7 +3,7 @@ from app.config import settings
 from firebase_admin import credentials
 
 try:
-    private_key = settings.FIREBASE_PRIVATE_KEY.replace('\\n', '\n').strip('"')
+    private_key = settings.FIREBASE_PRIVATE_KEY.replace('\r\n', '\n').replace('\r', '\n').replace('\\n', '\n').strip('"')
     print("Private key length:", len(private_key))
     print("Start:", repr(private_key[:50]))
     print("End:", repr(private_key[-50:]))

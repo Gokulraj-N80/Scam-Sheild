@@ -9,19 +9,30 @@ app = FastAPI(
     version="1.0.0"
 )
 
+import os
+
 # Configure CORS so React can consume this API
+allowed_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174"
+]
+
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    allowed_origins.extend([url.strip() for url in frontend_url.split(",") if url.strip()])
+
+is_wildcard = "*" in allowed_origins or not allowed_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174"
-    ],
-    allow_credentials=True,
+    allow_origins=allowed_origins if not is_wildcard else ["*"],
+    allow_credentials=not is_wildcard,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Register routes
 app.include_router(scan.router, prefix="/api")

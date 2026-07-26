@@ -118,10 +118,12 @@ def get_history(user_id: str) -> list:
     if not settings.USE_MOCK_DATABASE and firebase_initialized:
         try:
             scans_ref = db.collection("scans")
-            # Query scans for this user ordered by timestamp descending
-            query = scans_ref.where("user_id", "==", user_id).order_by("timestamp", direction="DESCENDING")
+            # Simple equality filter — no composite index needed
+            query = scans_ref.where("user_id", "==", user_id)
             docs = query.stream()
-            return [doc.to_dict() for doc in docs]
+            results = [doc.to_dict() for doc in docs]
+            # Sort descending by timestamp in Python (avoids Firestore composite index requirement)
+            return sorted(results, key=lambda x: x.get("timestamp", ""), reverse=True)
         except Exception as e:
             logger.error(f"Firestore get_history failed: {e}. Querying local mock DB.")
             
