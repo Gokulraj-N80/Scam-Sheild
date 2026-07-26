@@ -539,13 +539,46 @@ a:hover { color: var(--violet-700); }
   background: var(--grad-brand);
   color: #FFFFFF;
   box-shadow: var(--shadow-teal);
+  position: relative;
+  overflow: visible;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius: 9999px !important; /* Pill style */
 }
 .btn-accent:hover {
-  box-shadow: 0 12px 32px rgba(20,184,166,0.35);
+  box-shadow: 0 12px 32px rgba(20,184,166,0.35), 0 0 15px rgba(124,58,237,0.3);
   transform: translateY(-2px);
 }
 .btn-accent:active { transform: translateY(0); }
 .btn-accent:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Radar scanning pulse ring */
+.scanning-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid var(--teal-400);
+  opacity: 0;
+  animation: pulse-ring-teal 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse-ring-teal {
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(1.15, 1.35); opacity: 0; }
+}
+
+@keyframes scanning-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.btn-scanning {
+  background: linear-gradient(90deg, #7C3AED, #14B8A6, #7C3AED);
+  background-size: 200% auto;
+  animation: scanning-shimmer 2s linear infinite;
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.5);
+}
+
 
 .btn-orange {
   background: var(--grad-warm);

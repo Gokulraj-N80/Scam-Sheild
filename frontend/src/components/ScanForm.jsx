@@ -71,23 +71,25 @@ export default function ScanForm({ onScan, loading }) {
           <div className="scan-actions" style={{ justifyContent: "flex-end" }}>
             <button
               type="submit"
-              className="btn btn-accent"
+              className={`btn btn-accent ${loading ? "btn-scanning" : ""}`}
               disabled={!message.trim() || loading}
-              style={{ minWidth: "155px" }}
+              style={{ minWidth: "165px" }}
             >
+              {loading && <div className="scanning-ring" />}
               {loading ? (
                 <>
-                  <div style={{ width: 15, height: 15, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.75s linear infinite" }} />
-                  Analyzing...
+                  <span style={{ fontSize: "1.1rem", display: "inline-block", animation: "spin 1.5s linear infinite" }}>🔍</span>
+                  <span>Scanning...</span>
                 </>
               ) : (
                 <>
-                  <Scan size={15} />
+                  <Scan size={16} />
                   Scan Message
                 </>
               )}
             </button>
           </div>
+
         </form>
 
         <div className="try-example-inline">
