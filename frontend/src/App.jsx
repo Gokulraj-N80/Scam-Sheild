@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Navbar from "./components/Navbar";
 import ScanForm from "./components/ScanForm";
 import ResultDisplay from "./components/ResultDisplay";
@@ -69,6 +69,15 @@ function MainContent() {
   const [scanError, setScanError] = useState(null);
   const [showResult, setShowResult] = useState(false);
   const { getToken } = useAuth();
+  const resultRef = useRef(null);
+
+  useEffect(() => {
+    if (showResult && resultRef.current) {
+      setTimeout(() => {
+        resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, [showResult]);
 
   const handleScan = async (messageText) => {
     setScanLoading(true);
@@ -112,7 +121,6 @@ function MainContent() {
     });
     setShowResult(true);
     setActiveTab("scan");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCloseResult = () => {
@@ -157,7 +165,7 @@ function MainContent() {
 
             {/* Result — shown below form */}
             {scanResult && showResult && (
-              <div className="scan-result-wrapper">
+              <div ref={resultRef} className="scan-result-wrapper">
                 <div className="result-close-row">
                   <button className="result-close-btn" onClick={handleCloseResult}>
                     <X size={13} />
