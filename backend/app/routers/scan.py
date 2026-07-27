@@ -35,9 +35,6 @@ def scan_message(request: ScanRequest, user: Optional[dict] = Depends(get_curren
         raise HTTPException(status_code=400, detail="Message content cannot be empty")
         
     try:
-        # Add artificial delay to show scanning process/animations in UI
-        time.sleep(3)
-        
         # 1. Apply NLP preprocessing
         nlp_data = preprocess_text(request.message)
         

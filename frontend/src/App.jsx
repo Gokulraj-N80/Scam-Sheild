@@ -30,8 +30,8 @@ function LoadingDisplay() {
       setTimeout(() => {
         setMsgIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
         setFade(true);
-      }, 300);
-    }, 2800);
+      }, 200);
+    }, 900);
 
     return () => clearInterval(interval);
   }, []);
