@@ -1,12 +1,22 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import scan, history, auth
+from app.services.nlp_service import setup_nltk, get_spacy_nlp
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Warm up resources on startup to prevent slow first request
+    setup_nltk()
+    get_spacy_nlp()
+    yield
 
 app = FastAPI(
     title="ScamShield API",
     description="Backend API for AI Scam Message Detector",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 import os
