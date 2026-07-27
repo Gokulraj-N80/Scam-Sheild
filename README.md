@@ -9,40 +9,12 @@ ScamShield is an intelligent, full-stack cybersecurity application that analyzes
 
 ---
 
-## 🔮 System Architecture
+## 🔮 How It Works
 
-The workflow details the end-to-end processing pipeline from user message input to real-time AI evaluation and persistence:
-
-```mermaid
-graph TD
-    subgraph Client ["Client Interface (React / Vite)"]
-        UI["Interactive Dashboard"] -->|Sends Text| ScanAPI["POST /api/scan"]
-        Auth["Firebase Google OAuth"] -->|Auth State| UI
-    end
-
-    subgraph Preprocessing ["NLP pipeline (spaCy + NLTK)"]
-        ScanAPI --> Clean["Text Cleaning"]
-        Clean --> Lemma["Lemmatization"]
-        Clean --> NER["Named Entity Recognition"]
-        Clean --> Keywords["Keyword Extraction"]
-    end
-
-    subgraph AI ["AI Analysis Core"]
-        Lemma & NER & Keywords -->|Contextual Prompt| Gemini["Gemini 3.6 Flash"]
-        Gemini -->|JSON Response| Logic["Risk Score & Recommendations"]
-    end
-
-    subgraph Storage ["Persistence Layer"]
-        Logic -->|Save History| DB{Firebase / Mock JSON}
-        DB -->|Render Report| UI
-    end
-
-    %% Style Configuration
-    style UI fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff
-    style Gemini fill:#4c1d95,stroke:#8b5cf6,stroke-width:2px,color:#fff
-    style DB fill:#78350f,stroke:#d97706,stroke-width:2px,color:#fff
-    style Preprocessing fill:#064e3b,stroke:#059669,stroke-width:1px,color:#fff
-```
+1. **Submit Message:** The user types or pastes a message into the frontend scanner interface.
+2. **NLP Preprocessing:** The backend cleans the text and extracts named entities and key phrases using **spaCy** and **NLTK**.
+3. **AI Classification:** The preprocessed text is analyzed by the **Google Gemini** model to evaluate threat indicators and calculate a risk score.
+4. **Report & Save:** The app generates immediate safety recommendations, saves the report to the database (**Firebase** or local JSON), and presents the final results to the user.
 
 ---
 
