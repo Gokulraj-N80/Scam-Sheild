@@ -30,28 +30,44 @@ ScamShield is an intelligent, full-stack cybersecurity application that analyzes
 
 ## 📸 Screenshots
 
-### 🏠 Home Page
-![Home Page](Scam%20Detection/Home%20Page.png)
-
----
-
-### 🚨 Scam Message Detected
-![Scam Message](Scam%20Detection/Scam%20Message.png)
-
----
-
-### ✅ Safe Message Result
-![Safe Message](Scam%20Detection/Safe%20Message.png)
-
----
-
-### 📊 Dashboard
-![Dashboard](Scam%20Detection/Dashboard.png)
-
----
-
-### 🕐 Scan History
-![History](Scam%20Detection/Histroy.png)
+<table>
+  <tr>
+    <td align="center" width="100%">
+      <strong>🏠 Home Page</strong><br/><br/>
+      <img src="Scam%20Detection/Home%20Page.png" alt="Home Page" width="100%"/>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <br/>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>🚨 Scam Message Detected</strong><br/><br/>
+      <img src="Scam%20Detection/Scam%20Message.png" alt="Scam Message Detected" width="100%"/>
+    </td>
+    <td align="center" width="50%">
+      <strong>✅ Safe Message Result</strong><br/><br/>
+      <img src="Scam%20Detection/Safe%20Message.png" alt="Safe Message Result" width="100%"/>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <br/>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>📊 Analytics Dashboard</strong><br/><br/>
+      <img src="Scam%20Detection/Dashboard.png" alt="Analytics Dashboard" width="100%"/>
+    </td>
+    <td align="center" width="50%">
+      <strong>🕐 Scan History</strong><br/><br/>
+      <img src="Scam%20Detection/Histroy.png" alt="Scan History" width="100%"/>
+    </td>
+  </tr>
+</table>
 
 ---
 
