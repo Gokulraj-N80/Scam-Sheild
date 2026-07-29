@@ -24,9 +24,8 @@ export default function ScanForm({ onScan, loading }) {
       <div className="slow-server-notice animate-fade-up">
         <span className="slow-server-icon">⚡</span>
         <p>
-          <strong>Heads up!</strong> This app is hosted on a free server that may take{" "}
-          <strong>30–60 seconds</strong> to wake up on the first visit. If the scan takes
-          too long, please <strong>refresh the page and try again</strong>.
+          If scanning is taking too long, please{" "}
+          <strong>refresh the page and try again</strong>.
         </p>
       </div>
 
