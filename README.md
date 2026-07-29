@@ -28,6 +28,33 @@ ScamShield is an intelligent, full-stack cybersecurity application that analyzes
 
 ---
 
+## 📸 Screenshots
+
+### 🏠 Home Page
+![Home Page](Scam%20Detection/Home%20Page.png)
+
+---
+
+### 🚨 Scam Message Detected
+![Scam Message](Scam%20Detection/Scam%20Message.png)
+
+---
+
+### ✅ Safe Message Result
+![Safe Message](Scam%20Detection/Safe%20Message.png)
+
+---
+
+### 📊 Dashboard
+![Dashboard](Scam%20Detection/Dashboard.png)
+
+---
+
+### 🕐 Scan History
+![History](Scam%20Detection/Histroy.png)
+
+---
+
 ## 🛠️ Technology Stack
 
 | Layer | Technologies |
