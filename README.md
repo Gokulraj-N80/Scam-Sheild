@@ -32,14 +32,9 @@ ScamShield is an intelligent, full-stack cybersecurity application that analyzes
 
 <table>
   <tr>
-    <td align="center" width="100%">
+    <td align="center" colspan="2">
       <strong>🏠 Home Page</strong><br/><br/>
       <img src="Scam%20Detection/Home%20Page.png" alt="Home Page" width="100%"/>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <br/>
     </td>
   </tr>
   <tr>
@@ -50,11 +45,6 @@ ScamShield is an intelligent, full-stack cybersecurity application that analyzes
     <td align="center" width="50%">
       <strong>✅ Safe Message Result</strong><br/><br/>
       <img src="Scam%20Detection/Safe%20Message.png" alt="Safe Message Result" width="100%"/>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <br/>
     </td>
   </tr>
   <tr>
