@@ -54,7 +54,7 @@ ScamShield is an intelligent, full-stack cybersecurity application that analyzes
     </td>
     <td align="center" width="50%">
       <strong>🕐 Scan History</strong><br/><br/>
-      <img src="Scam%20Detection/Histroy.png" alt="Scan History" width="100%"/>
+      <img src="Scam%20Detection/History.png" alt="Scan History" width="100%"/>
     </td>
   </tr>
 </table>
