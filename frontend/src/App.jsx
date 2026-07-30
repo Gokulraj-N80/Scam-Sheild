@@ -154,7 +154,7 @@ function MainContent() {
                 <LoadingDisplay />
                 <div style={{ textAlign: "center", padding: "0 1rem 1.5rem" }}>
                   <p style={{ fontSize: "0.85rem", color: "var(--muted-fg)" }}>
-                    <strong>Note:</strong> We're using a free backend server. The first scan may take up to 50 seconds to wake up.
+                    <strong>Note:</strong> Scanning takes up to 50 seconds.
                   </p>
                 </div>
               </div>
