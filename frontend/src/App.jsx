@@ -70,11 +70,20 @@ function MainContent() {
   const [showResult, setShowResult] = useState(false);
   const { getToken } = useAuth();
   const resultRef = useRef(null);
+  const loadingRef = useRef(null);
 
   useEffect(() => {
     // Silently ping the backend on initial load to wake it up from free-tier sleep
     fetch(import.meta.env.VITE_API_URL.replace('/api', '/')).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (scanLoading && loadingRef.current) {
+      setTimeout(() => {
+        loadingRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, [scanLoading]);
 
   useEffect(() => {
     if (showResult && resultRef.current) {
@@ -150,7 +159,7 @@ function MainContent() {
 
             {/* Loading state */}
             {scanLoading && (
-              <div className="card animate-fade-up" style={{ padding: "0" }}>
+              <div ref={loadingRef} className="card animate-fade-up" style={{ padding: "0", scrollMarginTop: "2rem" }}>
                 <LoadingDisplay />
                 <div style={{ textAlign: "center", padding: "0 1rem 1.5rem" }}>
                   <p style={{ fontSize: "0.85rem", color: "var(--muted-fg)" }}>
