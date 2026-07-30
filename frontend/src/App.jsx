@@ -72,6 +72,11 @@ function MainContent() {
   const resultRef = useRef(null);
 
   useEffect(() => {
+    // Silently ping the backend on initial load to wake it up from free-tier sleep
+    fetch(import.meta.env.VITE_API_URL.replace('/api', '/')).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (showResult && resultRef.current) {
       setTimeout(() => {
         resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -147,6 +152,11 @@ function MainContent() {
             {scanLoading && (
               <div className="card animate-fade-up" style={{ padding: "0" }}>
                 <LoadingDisplay />
+                <div style={{ textAlign: "center", padding: "0 1rem 1.5rem" }}>
+                  <p style={{ fontSize: "0.85rem", color: "var(--muted-fg)" }}>
+                    <strong>Note:</strong> We're using a free backend server. The first scan may take up to 50 seconds to wake up.
+                  </p>
+                </div>
               </div>
             )}
 
