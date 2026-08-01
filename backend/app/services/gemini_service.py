@@ -95,7 +95,7 @@ Named Entities: {nlp_data['entities']}
 
     try:
         response = _gemini_client.models.generate_content(
-            model="gemini-3.6-flash",  # Google Gemini 3.6 Flash — fast, efficient LLM for scam analysis
+            model="gemini-1.5-flash",  # Google Gemini 1.5 Flash — fast, efficient LLM for scam analysis
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
