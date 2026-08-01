@@ -1,4 +1,5 @@
 import time
+import random
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
@@ -62,6 +63,9 @@ def scan_message(request: ScanRequest, user: Optional[dict] = Depends(get_curren
                 logger.error(f"Failed to save scan history: {db_err}")
                 # We do not crash the scan response if DB save fails
                 
+        # 4. Add artificial delay of 3-5 seconds to simulate deep scan
+        time.sleep(random.uniform(3, 5))
+        
         return ScanResponse(
             prediction=result["prediction"],
             probability=result["probability"],
