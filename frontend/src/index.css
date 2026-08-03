@@ -1855,6 +1855,7 @@ a:hover { color: var(--violet-700); }
 
 /* WhatsApp Promo Card Styling */
 .whatsapp-promo-card {
+  display: none !important;
   background: linear-gradient(135deg, rgba(20, 184, 166, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
   border: 1px solid rgba(20, 184, 166, 0.2);
   border-left: 4px solid var(--accent);
