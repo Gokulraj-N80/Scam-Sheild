@@ -124,6 +124,31 @@ export default function ScanForm({ onScan, loading }) {
         </div>
       </div>
 
+      {/* WhatsApp Bot Promo Card */}
+      <div className="card whatsapp-promo-card animate-fade-up stagger-2">
+        <div className="whatsapp-promo-content">
+          <div className="whatsapp-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19.001 4.908A9.817 9.817 0 0 0 11.992 2C6.534 2 2.085 6.448 2.08 11.908c0 1.748.458 3.45 1.321 4.956L2 22l5.255-1.377a9.816 9.816 0 0 0 4.73 1.206h.005c5.454 0 9.905-4.447 9.91-9.913a9.813 9.813 0 0 0-2.899-6.992zM11.992 20.12a8.185 8.185 0 0 1-4.177-1.135l-.299-.178-3.105.814.829-3.028-.196-.312a8.179 8.179 0 0 1-1.258-4.373c.003-4.514 3.678-8.19 8.199-8.19a8.15 8.15 0 0 1 5.79 2.402 8.147 8.147 0 0 1 2.4 5.796c-.004 4.515-3.677 8.196-8.188 8.196zm4.492-6.136c-.246-.124-1.455-.717-1.68-.8a.423.423 0 0 0-.308-.01c-.088.123-.343.432-.42.52-.078.087-.156.098-.402-.025a5.068 5.068 0 0 1-1.492-.92 5.584 5.584 0 0 1-1.032-1.285c-.144-.247-.015-.38.109-.504.11-.11.246-.288.37-.432.122-.144.164-.247.246-.412a.406.406 0 0 0-.02-.39c-.06-.124-.555-1.339-.76-1.832-.2-.482-.4-.416-.547-.424l-.467-.006c-.16 0-.422.06-.642.3a2.47 2.47 0 0 0-.771 1.837c0 1.08.787 2.122.896 2.27.11.148 1.547 2.362 3.748 3.313 2.2.95 2.2.633 2.597.596.398-.037 1.455-.595 1.66-1.173.205-.577.205-1.071.144-1.173-.06-.103-.22-.165-.466-.29z"/>
+            </svg>
+          </div>
+          <div className="whatsapp-promo-text">
+            <h3>Scan via WhatsApp Bot</h3>
+            <p>
+              Prefer using WhatsApp? Send or forward any suspicious message, link, or email directly to our official ScamShield WhatsApp bot for instant, real-time safety analysis.
+            </p>
+          </div>
+        </div>
+        <a
+          href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER ? import.meta.env.VITE_WHATSAPP_NUMBER.replace(/[^0-9]/g, '') : '15551993479'}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="whatsapp-btn"
+        >
+          Chat on WhatsApp
+        </a>
+      </div>
+
       {showExamples && (
         <ExamplePanel
           onSelect={(text) => {
